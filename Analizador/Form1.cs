@@ -9,8 +9,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using Analizador.Anlizadores;
 using Analizador.Analizador;
+using Analizador.Lexico;
+using Irony.Parsing;
 
 namespace Analizador
 {
@@ -22,10 +23,10 @@ namespace Analizador
             "public", "private", "protected",
             "int", "String", "double", "float","long", "byte","boolean", "char", "short", "void",
              "if", "else", "while", "for", "do", "switch", "break", "default", "case", "return",
-             "import", "new", "static", "package", "in", "null", "true", "false"
+             "import", "new", "static", "package", "in", "out", "null", "true", "false"
         };
 
-        List<Token> tokens = new List<Token>();
+        List<TokenG> tokens = new List<TokenG>();
         List<string> token_names = new List<string>();
         Regex rex;
         StringBuilder pattern = null;
@@ -37,50 +38,6 @@ namespace Analizador
             InitializeComponent();
         }
 
-        public int getWidth()
-        {
-            int w = 25;
-            int linea = txtEditorCodigo.Lines.Length;
-
-            if (linea <= 99)
-            {
-                w = 20 + (int)txtEditorCodigo.Font.Size;
-
-            }
-            else if (linea <= 999)
-            {
-                w = 30 + (int)txtEditorCodigo.Font.Size;
-            }
-            else
-            {
-                w = 50 + (int)txtEditorCodigo.Font.Size;
-            }
-            return w;
-        }
-
-
-        public void EnumerarLineas()
-        {
-            Point p = new Point(0, 0);
-
-            int Primerindice = txtEditorCodigo.GetCharIndexFromPosition(p);
-            int Primeralinea = txtEditorCodigo.GetLineFromCharIndex(Primerindice);
-
-            p.X = PanelCodigo.Width;
-            p.Y = PanelCodigo.Height;
-            int UltimoIndice = txtEditorCodigo.GetCharIndexFromPosition(p);
-            int UltimaLinea = txtEditorCodigo.GetLineFromCharIndex(UltimoIndice);
-            txtNumLinea.SelectionAlignment = HorizontalAlignment.Center;
-            txtNumLinea.Text = "";
-            txtNumLinea.Width = getWidth();
-
-            for (int i = Primeralinea; i <= UltimaLinea + 2; i++)
-            {
-                txtNumLinea.Text += i + 1 + "\n";
-            }
-
-        }
-
         private void Form1_Load(object sender, EventArgs e)
         {
             txtNumLinea.Font = txtEditorCodigo.Font;
@@ -88,23 +45,25 @@ namespace Analizador
             EnumerarLineas();
 
             //se almacenan los tokens a la lista con sus patrones
-            tokens.Add(new Token(@"\s+", "ESPACIO"));
-            tokens.Add(new Token(@"\b[_a-zA-Z][\w]*\b", "IDENTIFICADOR"));
-            tokens.Add(new Token("\".*?\"", "CADENA"));
-            tokens.Add(new Token(@"'\\.'|'[^\\]'", "CARACTER"));
-            tokens.Add(new Token("//[^\r\n]*", "COMENTARIO1"));
-            tokens.Add(new Token("/[*].*?[*]/", "COMENTARIO2"));
-            tokens.Add(new Token(@"\d*\.?\d+", "NUMERO"));
-            tokens.Add(new Token(@"[\(\)\{\}\[\];,]", "DELIMITADOR"));
-            tokens.Add(new Token(@"[\+\-/*%]", "OPERADOR"));
-            tokens.Add(new Token(@">|<|==|>=|<=|!", "COMPARADOR"));
-            tokens.Add(new Token(@"&&|\|\|", "OPERADOR_LOGICO"));
-            tokens.Add(new Token(@"\S", "OPERADOR_CONCATENACION"));
-            tokens.Add(new Token(@"[-=|\+=|\*=|\/=|%=|=]", "OPERADOR_ASIGNACION"));
-            tokens.Add(new Token(@"\+\+", "OPERADOR_INCREMENTO"));
-            tokens.Add(new Token(@"--", "OPERADOR_DECREMENTO"));
+           
+            tokens.Add(new TokenG(@"\s+", "ESPACIO"));
+            tokens.Add(new TokenG(@"\b[_a-zA-Z][\w]*\b", "IDENTIFICADOR"));
+            tokens.Add(new TokenG("\".*?\"", "CADENA"));
+            tokens.Add(new TokenG(@"'\\.'|'[^\\]'", "CARACTER"));
+            tokens.Add(new TokenG("//[^\r\n]*", "COMENTARIO1"));
+            tokens.Add(new TokenG("/[*].*?[*]/", "COMENTARIO2"));
+            tokens.Add(new TokenG(@"\d*\.?\d+", "NUMERO"));
+            tokens.Add(new TokenG(@"[\(\)\{\}\[\];,]", "DELIMITADOR"));
+            tokens.Add(new TokenG(@"[\+\-/*%]", "OPERADOR"));
+            tokens.Add(new TokenG(@">|<|==|>=|<=|!", "COMPARADOR"));
+            tokens.Add(new TokenG(@"&&|\|\|", "OPERADOR_LOGICO"));
+            tokens.Add(new TokenG(@"\S", "OPERADOR_CONCATENACION"));
+            tokens.Add(new TokenG(@"[-=|\+=|\*=|\/=|%=|=]", "OPERADOR_ASIGNACION"));
+            tokens.Add(new TokenG(@"\+\+", "OPERADOR_INCREMENTO"));
+            tokens.Add(new TokenG(@"--", "OPERADOR_DECREMENTO"));
 
-            foreach (Token token in tokens)
+            //se recorre la lista de los tokens
+            foreach (TokenG token in tokens)
             {
                 if (pattern == null)
                 {
@@ -113,7 +72,6 @@ namespace Analizador
 
                 if (!token.getIgnore())
                 {
-
                     pattern.Append(string.Format("|(?<{0}>{1})", token.getNombre(), token.getPatron())); //Aqui batalle por el |
                     token_names.Add(token.getNombre());
                 }
@@ -132,10 +90,10 @@ namespace Analizador
             }
         }
 
+        //método para obtener la linea de dónde estan ubicados los tokens 
         private int ContarLineas(string token, int index, ref int line_start)
         {
             int linea = 0;
-
             for (int i = 0; i < token.Length; i++)
             {
                 if (token[i] == '\n')
@@ -147,14 +105,12 @@ namespace Analizador
             return linea;
         }
 
+        //método de obtención de tokens
         private IEnumerable<Tokens> GetTokens(string text)
         {
             Match match = rex.Match(text);
-
             if (!match.Success) yield break;
-
             int line = 1, start = 0, index = 0;
-
             while (match.Success)
             {
                 if (match.Index > index)
@@ -184,7 +140,8 @@ namespace Analizador
             }
         }
 
-        private void AnalizarCodigo()
+        //método de llenar la tabla del analisis léxico
+        private void AnalisisLexico()
         {
             tablaTokens.Rows.Clear();
             foreach (var tk in this.GetTokens(txtEditorCodigo.Text))
@@ -199,8 +156,6 @@ namespace Analizador
                     if (tk.Name == "COMENTARIO")
                     {
                         tablaTokens.Rows.Add(tk.Name, tk.Lexema, tk.Linea);
-                        
-
                     } else
                     {
                         if(tk.Name != "ESPACIO")
@@ -212,57 +167,38 @@ namespace Analizador
                         }
                     }
                 }
-            }
+            }  
+        }
+
+        //método de evaluación sintáctico
+        private void AnalisisSintactico()
+        {
+            Gramatica gramatica = new Gramatica();
+            LanguageData lenguaje = new LanguageData(gramatica);
+            Parser parser = new Parser(lenguaje);
+            ParseTree arbol = parser.Parse(txtEditorCodigo.Text);
+            ParseTreeNode nodo = arbol.Root;
            
-        }
-
-        private void TxtEditorCodigo_TextChanged(object sender, EventArgs e)
-        {
-            AnalizarCodigo();
-            if (txtEditorCodigo.Text == "")
+            if (nodo == null)
             {
-                EnumerarLineas();
-            }
-        }
+                txtResultado.ForeColor = Color.Red;
+                txtResultado.Text = ">>>";
+                txtEditorCodigo.ForeColor = Color.Red;
 
-
-        private void TxtEditorCodigo_SelectionChanged(object sender, EventArgs e)
-        {
-            Point p = txtEditorCodigo.GetPositionFromCharIndex(txtEditorCodigo.SelectionStart);
-            if (p.X == 1)
+                for (int i=0; i< arbol.ParserMessages.Count; i++)
+                {
+                    txtResultado.Text += arbol.ParserMessages[i].Message + "\n>>>linea:" + arbol.ParserMessages[i].Location.Line + "\n";        
+                }
+            } else
             {
-                EnumerarLineas();
+                txtResultado.ForeColor = Color.Green;
+                txtEditorCodigo.ForeColor = Color.Green;
+                txtResultado.Text = "Analisis correcto";
             }
+
         }
 
-
-        private void TxtEditorCodigo_VScroll(object sender, EventArgs e)
-        {
-            txtNumLinea.Text = "";
-            EnumerarLineas();
-            txtNumLinea.Invalidate();
-        }
-
-
-        private void TxtEditorCodigo_FontChanged(object sender, EventArgs e)
-        {
-            txtNumLinea.Font = txtEditorCodigo.Font;
-            txtEditorCodigo.Select();
-            EnumerarLineas();
-        }
-
-        private void TxtNumLinea_MouseDown(object sender, MouseEventArgs e)
-        {
-            txtEditorCodigo.Select();
-            txtNumLinea.DeselectAll();
-        }
-
-
-        private void Form1_Resize(object sender, EventArgs e)
-        {
-            EnumerarLineas();
-        }
-
+        //Abrir desde un archivo
         private void BtnAbrir_Click(object sender, EventArgs e)
         {
             abrirArchivo.Title = "Abrir";
@@ -278,7 +214,87 @@ namespace Analizador
 
         }
 
-       
+        private void TxtEditorCodigo_TextChanged(object sender, EventArgs e)
+        {
+            AnalisisLexico();
+            AnalisisSintactico();
+            if (txtEditorCodigo.Text == "")
+            {
+                EnumerarLineas();
+            }
+        }
+
+        //métodos para poner la enumeración de lineas
+        public int getWidth()
+        {
+            int w = 25;
+            int linea = txtEditorCodigo.Lines.Length;
+
+            if (linea <= 99)
+            {
+                w = 20 + (int)txtEditorCodigo.Font.Size;
+
+            }
+            else if (linea <= 999)
+            {
+                w = 30 + (int)txtEditorCodigo.Font.Size;
+            }
+            else
+            {
+                w = 50 + (int)txtEditorCodigo.Font.Size;
+            }
+            return w;
+        }
+
+        public void EnumerarLineas()
+        {
+            Point p = new Point(0, 0);
+
+            int Primerindice = txtEditorCodigo.GetCharIndexFromPosition(p);
+            int Primeralinea = txtEditorCodigo.GetLineFromCharIndex(Primerindice);
+
+            p.X = PanelCodigo.Width;
+            p.Y = PanelCodigo.Height;
+            int UltimoIndice = txtEditorCodigo.GetCharIndexFromPosition(p);
+            int UltimaLinea = txtEditorCodigo.GetLineFromCharIndex(UltimoIndice);
+            txtNumLinea.SelectionAlignment = HorizontalAlignment.Center;
+            txtNumLinea.Text = "";
+            txtNumLinea.Width = getWidth();
+
+            for (int i = Primeralinea; i <= UltimaLinea + 2; i++)
+            {
+                txtNumLinea.Text += i + 1 + "\n";
+            }
+        }
+        private void TxtEditorCodigo_SelectionChanged(object sender, EventArgs e)
+        {
+            Point p = txtEditorCodigo.GetPositionFromCharIndex(txtEditorCodigo.SelectionStart);
+            if (p.X == 1)
+            {
+                EnumerarLineas();
+            }
+        }
+        private void TxtEditorCodigo_VScroll(object sender, EventArgs e)
+        {
+            txtNumLinea.Text = "";
+            EnumerarLineas();
+            txtNumLinea.Invalidate();
+        }
+        private void TxtEditorCodigo_FontChanged(object sender, EventArgs e)
+        {
+            txtNumLinea.Font = txtEditorCodigo.Font;
+            txtEditorCodigo.Select();
+            EnumerarLineas();
+        }
+        private void TxtNumLinea_MouseDown(object sender, MouseEventArgs e)
+        {
+            txtEditorCodigo.Select();
+            txtNumLinea.DeselectAll();
+        }
+        private void Form1_Resize(object sender, EventArgs e)
+        {
+            EnumerarLineas();
+        }
     }
 
 }

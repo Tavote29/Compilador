@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.btnEjecutar = new System.Windows.Forms.Button();
             this.txtEditorCodigo = new System.Windows.Forms.RichTextBox();
             this.txtNumLinea = new System.Windows.Forms.RichTextBox();
             this.PanelCodigo = new System.Windows.Forms.Panel();
@@ -40,20 +39,14 @@
             this.Lexema = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Linea = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.txtResultado = new System.Windows.Forms.RichTextBox();
             this.PanelCodigo.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.tablaTokens)).BeginInit();
             this.groupBox2.SuspendLayout();
+            this.groupBox3.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // btnEjecutar
-            // 
-            this.btnEjecutar.Location = new System.Drawing.Point(111, 419);
-            this.btnEjecutar.Name = "btnEjecutar";
-            this.btnEjecutar.Size = new System.Drawing.Size(75, 23);
-            this.btnEjecutar.TabIndex = 2;
-            this.btnEjecutar.Text = "Ejecutar";
-            this.btnEjecutar.UseVisualStyleBackColor = true;
             // 
             // txtEditorCodigo
             // 
@@ -154,15 +147,33 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Analizador léxico";
             // 
+            // groupBox3
+            // 
+            this.groupBox3.Controls.Add(this.txtResultado);
+            this.groupBox3.Location = new System.Drawing.Point(450, 216);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(312, 156);
+            this.groupBox3.TabIndex = 7;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "Analizador sintáctico";
+            // 
+            // txtResultado
+            // 
+            this.txtResultado.Location = new System.Drawing.Point(6, 19);
+            this.txtResultado.Name = "txtResultado";
+            this.txtResultado.Size = new System.Drawing.Size(300, 131);
+            this.txtResultado.TabIndex = 0;
+            this.txtResultado.Text = "";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(983, 450);
+            this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.btnAbrir);
             this.Controls.Add(this.groupBox1);
-            this.Controls.Add(this.btnEjecutar);
             this.Name = "Form1";
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.Form1_Load);
@@ -171,13 +182,12 @@
             this.groupBox1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.tablaTokens)).EndInit();
             this.groupBox2.ResumeLayout(false);
+            this.groupBox3.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
 
         #endregion
-
-        private System.Windows.Forms.Button btnEjecutar;
         private System.Windows.Forms.RichTextBox txtEditorCodigo;
         private System.Windows.Forms.RichTextBox txtNumLinea;
         private System.Windows.Forms.Panel PanelCodigo;
@@ -189,6 +199,8 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Lexema;
         private System.Windows.Forms.DataGridViewTextBoxColumn Linea;
         private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.RichTextBox txtResultado;
     }
 }
 
